@@ -1,8 +1,7 @@
 services:
-  - type: web
+  - type: docker
     name: skills-hub
-    env: docker
     plan: free
-    dockerComposeFile: docker-compose.yml
     region: oregon
+    dockerComposeFile: docker-compose.yml
     autoDeploy: true
