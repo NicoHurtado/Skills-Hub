@@ -321,7 +321,7 @@ const Landing = () => {
               transition={{ delay: 0.3, duration: 0.5 }}
               className="block text-primary-200"
             >
-              Comienza a usar Skills Hub hoy mismo.
+              Att: Nicolas Hurtado A.
             </motion.span>
           </motion.h2>
           <motion.div 
@@ -358,7 +358,7 @@ const Landing = () => {
             variants={fadeInUp}
             className="mt-8 text-center text-base text-neutral-500"
           >
-            &copy; {new Date().getFullYear()} Skills Hub. Todos los derechos reservados.
+            &copy; {new Date().getFullYear()} Skills Hub. Todos los derechos reservados. created by @NicoHurtado
           </motion.p>
         </div>
       </motion.footer>
