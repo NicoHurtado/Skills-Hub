@@ -1,7 +1,7 @@
 # Skills Hub
 
 ## Descripción
-Skills Hub es una aplicación web que utiliza IA para generar cursos personalizados adaptados a las necesidades específicas de cada usuario.
+Skills Hub es una aplicación web que utiliza IA para generar cursos personalizados adaptados a las necesidades específicas de cada usuario. Creado por Nicolas Hurtado Amezquita
 
 ## Características
 - Generación de cursos personalizados usando IA
