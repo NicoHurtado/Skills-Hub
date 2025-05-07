@@ -1,0 +1,82 @@
+import axios from 'axios';
+
+const API_URL = 'http://localhost:8000';
+
+// Create an axios instance with default configuration
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add request interceptor to include auth token in all authenticated requests
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Course API Services
+export const courseService = {
+  // Generate a course
+  generateCourse: async (topic, experienceLevel, availableTime) => {
+    try {
+      const response = await api.post('/generate-course', {
+        topic,
+        experience_level: experienceLevel,
+        available_time: availableTime,
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to generate course');
+    }
+  },
+  
+  // Save a course
+  saveCourse: async (courseData) => {
+    try {
+      const response = await api.post('/save-course', courseData);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to save course');
+    }
+  },
+  
+  // Get all courses for current user
+  getCourses: async () => {
+    try {
+      const response = await api.get('/courses');
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to fetch courses');
+    }
+  },
+  
+  // Get a specific course by ID
+  getCourse: async (courseId) => {
+    try {
+      const response = await api.get(`/courses/${courseId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to fetch course');
+    }
+  },
+  
+  // Delete a course
+  deleteCourse: async (courseId) => {
+    try {
+      const response = await api.delete(`/courses/${courseId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to delete course');
+    }
+  },
+};
+
+export default api; 
