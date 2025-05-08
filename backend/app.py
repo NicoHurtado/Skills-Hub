@@ -72,7 +72,7 @@ app.add_middleware(
 )
 
 # API config
-OPENROUTER_API_KEY = "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"
+OPENROUTER_API_KEY = "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"
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # Data models
@@ -315,9 +315,17 @@ async def generate_course(request: CourseRequest, current_user: dict = Depends(g
     try:
         response = requests.post(OPENROUTER_API_URL, headers=headers, json=data)
         if response.status_code != 200:
-            raise HTTPException(status_code=response.status_code, detail=response.text)
+            # Log more detailed error information
+            error_detail = f"Status code: {response.status_code}, Response: {response.text}"
+            print(f"OpenRouter API error: {error_detail}")
+            raise HTTPException(status_code=response.status_code, detail=error_detail)
 
+        # Log successful response
+        print(f"OpenRouter API response status: {response.status_code}")
+        
         ai_response = response.json()
+        print(f"OpenRouter API response: {json.dumps(ai_response, indent=2)}")
+        
         content = ai_response["choices"][0]["message"]["content"]
 
         try:
@@ -371,6 +379,11 @@ async def generate_course(request: CourseRequest, current_user: dict = Depends(g
             )
 
     except Exception as e:
+        # Add more detailed error logging
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Exception in generate_course: {str(e)}")
+        print(f"Traceback: {error_trace}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/save-course")

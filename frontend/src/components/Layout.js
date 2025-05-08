@@ -36,7 +36,7 @@ const Layout = ({ children }) => {
         } md:hidden`}
       >
         <div className="flex items-center justify-between p-4 border-b border-neutral-200">
-          <h2 className="text-xl font-semibold text-primary-600">Skills Hub</h2>
+          <h2 className="text-xl font-semibold text-primary-600">Prompt2Course</h2>
           <button
             onClick={() => setSidebarOpen(false)}
             className="p-2 rounded-md text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100"
@@ -99,7 +99,7 @@ const Layout = ({ children }) => {
       {/* Desktop sidebar */}
       <div className="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 border-r border-neutral-200 bg-white">
         <div className="flex items-center h-16 px-4 bg-white border-b border-neutral-200">
-          <h2 className="text-xl font-semibold text-primary-600">Skills Hub</h2>
+          <h2 className="text-xl font-semibold text-primary-600">Prompt2Course</h2>
         </div>
 
         <div className="flex-1 flex flex-col overflow-y-auto pt-5 pb-4">
@@ -157,7 +157,7 @@ const Layout = ({ children }) => {
       <div className="flex flex-col w-0 flex-1 md:ml-64">
         {/* Mobile header */}
         <div className="flex items-center justify-between md:hidden h-16 bg-white px-4 border-b border-neutral-200">
-          <h2 className="text-xl font-semibold text-primary-600">Skills Hub</h2>
+          <h2 className="text-xl font-semibold text-primary-600">Prompt2Course</h2>
           <button
             onClick={() => setSidebarOpen(true)}
             className="p-2 rounded-md text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100"

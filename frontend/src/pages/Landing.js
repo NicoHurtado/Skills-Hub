@@ -54,7 +54,7 @@ const Landing = () => {
               transition={{ duration: 0.6 }}
               className="flex-shrink-0 flex items-center"
             >
-              <h1 className="text-xl font-bold text-primary-600">Skills Hub</h1>
+              <h1 className="text-xl font-bold text-primary-600">Prompt2Course</h1>
             </motion.div>
             <motion.div 
               variants={slideInFromRight}
@@ -106,7 +106,7 @@ const Landing = () => {
                 transition={{ duration: 0.5, delay: 0.7 }}
                 className="mt-6 text-lg text-neutral-600"
               >
-                Skills Hub te permite generar cursos personalizados para aprender cualquier tema, adaptados a tu nivel de experiencia y tiempo disponible.
+                Prompt2Course te permite generar cursos personalizados para aprender cualquier tema, adaptados a tu nivel de experiencia y tiempo disponible.
               </motion.p>
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
@@ -163,7 +163,7 @@ const Landing = () => {
                   >
                     <img
                       src="/image.png"
-                      alt="Skills Hub AI Learning"
+                      alt="Prompt2Course AI Learning"
                       className="w-full h-full object-contain rounded-2xl"
                     />
                     
@@ -217,7 +217,7 @@ const Landing = () => {
               variants={fadeInUp}
               className="mt-4 max-w-2xl text-xl text-neutral-600 lg:mx-auto"
             >
-              Skills Hub simplifica el proceso de aprendizaje con herramientas intuitivas y recursos personalizados.
+              Prompt2Course simplifica el proceso de aprendizaje con herramientas intuitivas y recursos personalizados.
             </motion.p>
           </motion.div>
 
@@ -358,7 +358,7 @@ const Landing = () => {
             variants={fadeInUp}
             className="mt-8 text-center text-base text-neutral-500"
           >
-            &copy; {new Date().getFullYear()} Skills Hub. Todos los derechos reservados. created by @NicoHurtado
+            &copy; {new Date().getFullYear()} Prompt2Course. Todos los derechos reservados. created by @NicoHurtado
           </motion.p>
         </div>
       </motion.footer>
