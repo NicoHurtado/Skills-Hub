@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiArrowLeft, FiClock, FiBookOpen, FiCheckCircle, FiInfo, FiDownload, FiHelpCircle, FiAlertCircle } from 'react-icons/fi';
+import { FiArrowLeft, FiClock, FiBookOpen, FiCheckCircle, FiInfo, FiDownload, FiHelpCircle, FiAlertCircle, FiCheck } from 'react-icons/fi';
 import Layout from '../components/Layout';
 import { courseService } from '../services/api';
 
@@ -13,6 +13,10 @@ const CourseView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeSection, setActiveSection] = useState('roadmap');
+  const [knownTopics, setKnownTopics] = useState({}); // Para rastrear temas marcados como conocidos
+  const [replacementLoading, setReplacementLoading] = useState(false); // Para indicar carga al reemplazar tema
+  const [replacingTopic, setReplacingTopic] = useState(null); // Para rastrear qué tema está siendo reemplazado
+  const [replacingModule, setReplacingModule] = useState(null); // Para rastrear qué módulo está siendo reemplazado
   
   useEffect(() => {
     const fetchCourse = async () => {
@@ -20,6 +24,15 @@ const CourseView = () => {
         setLoading(true);
         const data = await courseService.getCourse(courseId);
         setCourse(data);
+        
+        // Inicializar la estructura para temas conocidos
+        if (data?.content?.roadmap) {
+          const initialKnownTopics = {};
+          Object.keys(data.content.roadmap).forEach(section => {
+            initialKnownTopics[section] = Array(data.content.roadmap[section].length).fill(false);
+          });
+          setKnownTopics(initialKnownTopics);
+        }
       } catch (error) {
         console.error('Error fetching course:', error);
         setError('No se pudo cargar el curso. Por favor, intenta de nuevo más tarde.');
@@ -30,6 +43,98 @@ const CourseView = () => {
     
     fetchCourse();
   }, [courseId]);
+  
+  // Función para marcar un tema como conocido y solicitar un reemplazo
+  const handleMarkAsKnown = async (sectionName, topicIndex) => {
+    try {
+      // Evitar múltiples solicitudes simultáneas
+      if (replacementLoading) return;
+      
+      // Guardar una referencia del tema que será reemplazado
+      setReplacingTopic({ section: sectionName, index: topicIndex });
+      
+      // Marcar como "en proceso de reemplazo"
+      setReplacementLoading(true);
+      
+      // Preparar datos para la solicitud
+      const requestData = {
+        course_id: courseId,
+        section: sectionName,
+        current_topic: course.content.roadmap[sectionName][topicIndex],
+        experience_level: course.experience_level
+      };
+      
+      try {
+        // Hacer una solicitud al backend para obtener un tema de reemplazo
+        const response = await courseService.requestTopicReplacement(requestData);
+        
+        if (response && response.replacement_topic) {
+          // Actualizar el tema con el reemplazo
+          const updatedCourse = { ...course };
+          updatedCourse.content.roadmap[sectionName][topicIndex] = response.replacement_topic;
+          setCourse(updatedCourse);
+        } else {
+          alert('No se pudo obtener un tema de reemplazo. El servicio no devolvió un tema válido.');
+        }
+      } catch (error) {
+        console.error('Error al solicitar reemplazo:', error);
+        alert('No se pudo obtener un tema de reemplazo. Por favor, intenta de nuevo.');
+      } finally {
+        setReplacementLoading(false);
+        setReplacingTopic(null);
+      }
+    } catch (e) {
+      console.error('Error en el manejo de tema conocido:', e);
+      setReplacementLoading(false);
+      setReplacingTopic(null);
+    }
+  };
+  
+  // Función para marcar un módulo como conocido y solicitar un reemplazo
+  const handleMarkModuleAsKnown = async (moduleIndex) => {
+    try {
+      // Evitar múltiples solicitudes simultáneas
+      if (replacementLoading) return;
+      
+      // Guardar una referencia del módulo que será reemplazado
+      setReplacingModule(moduleIndex);
+      
+      // Marcar como "en proceso de reemplazo"
+      setReplacementLoading(true);
+      
+      // Preparar datos para la solicitud
+      const requestData = {
+        course_id: courseId,
+        module_index: moduleIndex,
+        current_module_title: course.content.modules[moduleIndex].title,
+        experience_level: course.experience_level
+      };
+      
+      try {
+        // Hacer una solicitud al backend para obtener un módulo de reemplazo
+        const response = await courseService.requestModuleReplacement(requestData);
+        
+        if (response && response.replacement_module) {
+          // Actualizar el módulo con el reemplazo
+          const updatedCourse = { ...course };
+          updatedCourse.content.modules[moduleIndex] = response.replacement_module;
+          setCourse(updatedCourse);
+        } else {
+          alert('No se pudo obtener un módulo de reemplazo. El servicio no devolvió un módulo válido.');
+        }
+      } catch (error) {
+        console.error('Error al solicitar reemplazo de módulo:', error);
+        alert('No se pudo obtener un módulo de reemplazo. Por favor, intenta de nuevo.');
+      } finally {
+        setReplacementLoading(false);
+        setReplacingModule(null);
+      }
+    } catch (e) {
+      console.error('Error en el manejo de módulo conocido:', e);
+      setReplacementLoading(false);
+      setReplacingModule(null);
+    }
+  };
   
   if (loading) {
     return (
@@ -167,24 +272,48 @@ const CourseView = () => {
             {/* Learning roadmap */}
             <div>
               <h2 className="text-lg font-medium text-neutral-900 mb-3">Ruta de aprendizaje</h2>
-              <div className="space-y-3">
-                {courseContent.roadmap.map((step, index) => (
-                  <motion.div 
-                    key={index}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                    className="bg-white rounded-xl border border-neutral-200 p-4 shadow-sm"
-                  >
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-primary-100 text-primary-700 mr-3">
-                        {index + 1}
-                      </div>
-                      <div>
-                        <p className="text-neutral-800">{step}</p>
+              <div className="space-y-6">
+                {Object.entries(courseContent.roadmap).map(([sectionName, topics], sectionIndex) => (
+                  <div key={sectionIndex} className="border border-neutral-200 rounded-xl overflow-hidden">
+                    <div className="bg-primary-50 px-6 py-3 border-b border-neutral-200">
+                      <h3 className="font-medium text-neutral-800">{sectionName}</h3>
+                    </div>
+                    <div className="p-4">
+                      <div className="space-y-3">
+                        {topics.map((topic, topicIndex) => (
+                          <motion.div 
+                            key={topicIndex}
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.2, delay: topicIndex * 0.05 }}
+                            className="flex items-start bg-white rounded-xl p-3 group"
+                          >
+                            <div className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full bg-primary-100 text-primary-700 mr-3">
+                              {topicIndex + 1}
+                            </div>
+                            <div className="flex-grow">
+                              <p className="text-neutral-800">{topic}</p>
+                            </div>
+                            {replacingTopic && 
+                              replacingTopic.section === sectionName && 
+                              replacingTopic.index === topicIndex ? (
+                              <div className="ml-3 flex items-center">
+                                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary-600"></div>
+                              </div>
+                            ) : (
+                              <button 
+                                className="ml-3 text-neutral-400 hover:text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Marcar como conocido y reemplazar"
+                                onClick={() => handleMarkAsKnown(sectionName, topicIndex)}
+                              >
+                                <FiCheck className="w-5 h-5" />
+                              </button>
+                            )}
+                          </motion.div>
+                        ))}
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -206,7 +335,23 @@ const CourseView = () => {
                 
                 <div className="p-6">
                   <div className="space-y-4">
-                    <h4 className="font-medium text-neutral-800">Pasos:</h4>
+                    <div className="flex justify-between items-center">
+                      <h4 className="font-medium text-neutral-800">Pasos:</h4>
+                      {replacingModule === moduleIndex ? (
+                        <div className="flex items-center">
+                          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary-600 mr-2"></div>
+                          <span className="text-sm text-primary-600">Reemplazando módulo...</span>
+                        </div>
+                      ) : (
+                        <button 
+                          className="flex items-center text-sm text-neutral-500 hover:text-primary-600 transition-colors"
+                          onClick={() => handleMarkModuleAsKnown(moduleIndex)}
+                        >
+                          <FiCheck className="mr-1" />
+                          <span>Ya conozco este módulo</span>
+                        </button>
+                      )}
+                    </div>
                     <ul className="space-y-3">
                       {module.steps.map((step, stepIndex) => (
                         <li key={stepIndex} className="flex">

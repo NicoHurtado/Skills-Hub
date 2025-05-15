@@ -1,0 +1,48 @@
+ {
+  "title": "Aprende Inglés Intermedio: Rápido y Eficiente",
+  "objective": "Aumenta tus habilidades en Inglés con un curso práctico y completo para personas ocupadas que buscan aprender de manera rápida pero profunda.",
+  "prerequisites": ["Conocimientos básicos de Inglés"],
+  "definitions": ["Gramática: estructuras y reglas gramaticales del idioma inglés", "Vocabulario: palabras y frases comunes del idioma inglés", "Pronunciación: hablar con correcta articulación"],
+  "roadmap": {
+    "Fundamentos": ["Gramática básica", "Vocabulario básico", "Pronunciación básica"],
+    "Nivel Intermedio - Part 1": ["Gramática avanzada", "Vocabulario ampliado", "Pronunciación avanzada"],
+    "Nivel Intermedio - Part 2": ["Expresiones idiomáticas", "Frases coloquiales", "Vocabulario avanzado"]
+  },
+  "modules": [
+    {
+      "title": "Gramática básica",
+      "steps": ["Tiempos verbales", "Estructuras de oración", "Artículos", "Preposiciones"],
+      "example": "I go to the store every day."
+    },
+    {
+      "title": "Gramática avanzada",
+      "steps": ["Condicionales", "Subjuntivo", "Pasados compuestos"],
+      "example": "If I had a million dollars, I would buy a house."
+    },
+    {
+      "title": "Vocabulario básico",
+      "steps": ["Nombres comunes", "Verbs de acción", "Palabras de tiempo"],
+      "example": "The dog barks at the mailman."
+    },
+    {
+      "title": "Vocabulario ampliado",
+      "steps": ["Sinónimos y antonímicos", "Palabras técnicas y especializadas", "Palabras y frases idiomáticas"],
+      "example": "She's in a good mood today."
+    },
+    {
+      "title": "Pronunciación básica",
+      "steps": ["Vocalización", "Articulación", "Intonación"],
+      "example": "The cat sat on the mat."
+    },
+    {
+      "title": "Pronunciación avanzada",
+      "steps": ["Palabras con diptongos", "Palabras con hiatus", "Acento y fluidez"],
+      "example": "She'll be ready in a minute."
+    }
+  ],
+  "resources": ["Glosario de vocabulario", "Lista de recursos para gramática", "Lista de recursos para pronunciación", "Audiolibros para práctica"],
+  "faqs": ["¿Qué es el subjuntivo?", "¿Cómo puedo mejorar mi pronunciación?", "¿Cómo puedo ampliar mi vocabulario?"],
+  "errors": ["Usar verbos en formas incorrectas", "Usar preposiciones incorrectas", "Usar pronunciación incorrecta"],
+  "downloads": ["Glosario de vocabulario", "Lista de recursos para gramática", "Lista de recursos para pronunciación"],
+  "summary": "Aprende Inglés rápido y eficientemente con nuestro curso práctico y completo. Aumenta tus habilidades gramaticales, amplia tu vocabulario y mejora tu pronunciación en Inglés intermedio."
+}

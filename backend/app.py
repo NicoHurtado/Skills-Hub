@@ -127,7 +127,7 @@ app.add_middleware(
 )
 
 # API config
-OPENROUTER_API_KEY = "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"
+OPENROUTER_API_KEY = "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"
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # Data models
@@ -176,7 +176,7 @@ class CourseResponse(BaseModel):
     objective: str
     prerequisites: List[str]
     definitions: List[str]
-    roadmap: List[str]
+    roadmap: Dict[str, List[str]]
     modules: List[Module]
     resources: List[str]
     faqs: List[str]
@@ -190,6 +190,18 @@ class SavedCourseRequest(BaseModel):
     content: Dict[str, Any]
     experience_level: str
     available_time: str
+
+class TopicReplacementRequest(BaseModel):
+    course_id: str
+    section: str
+    current_topic: str
+    experience_level: str
+
+class ModuleReplacementRequest(BaseModel):
+    course_id: str
+    module_index: int
+    current_module_title: str
+    experience_level: str
 
 # Helper functions
 def get_password_hash(password):
@@ -377,6 +389,9 @@ async def generate_course(request: CourseRequest, current_user: dict = Depends(g
     if not request.topic or len(request.topic.strip()) < 3:
         raise HTTPException(status_code=400, detail="Course topic must have at least 3 characters")
 
+    # Log the request parameters for debugging
+    print(f"Generating course for topic: '{request.topic}', experience: {request.experience_level}, time: {request.available_time}")
+
     # Check subscription status and course limit
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -455,7 +470,7 @@ async def generate_course(request: CourseRequest, current_user: dict = Depends(g
         "2. 🎯 Objetivo del curso\n"
         "3. 🧠 Conceptos previos\n"
         "4. 📌 Definiciones clave\n"
-        "5. 🗺️ Mapa de aprendizaje\n"
+        "5. 🗺️ Mapa de aprendizaje (IMPORTANTE: Debes estructurar el mapa con formato de secciones, con cada sección conteniendo varios temas específicos. Ejemplo: '1. Fundamentos: [tema1, tema2, tema3]', '2. Nivel intermedio: [tema1, tema2]', etc.)\n"
         "6. 📚 Módulos con título, pasos y ejemplo\n"
         "7. 🌐 Recursos adicionales sugeridos\n"
         "8. ❓ Preguntas frecuentes\n"
@@ -468,7 +483,7 @@ async def generate_course(request: CourseRequest, current_user: dict = Depends(g
         '  "objective": "string",\n'
         '  "prerequisites": ["..."],\n'
         '  "definitions": ["..."],\n'
-        '  "roadmap": ["..."],\n'
+        '  "roadmap": {"sección1": ["tema1", "tema2"], "sección2": ["tema1", "tema2"]},\n'
         '  "modules": [{"title": "...", "steps": ["..."], "example": "..."}],\n'
         '  "resources": ["..."],\n'
         '  "faqs": ["..."],\n'
@@ -488,49 +503,128 @@ async def generate_course(request: CourseRequest, current_user: dict = Depends(g
         "stream": False,
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.7,
-        "max_tokens": 2000
+        "max_tokens": 1500  # Reducir tokens para asegurarnos de no exceder límites
     }
 
     try:
+        print("Sending request to OpenRouter API...")
         response = requests.post(OPENROUTER_API_URL, headers=headers, json=data)
+        print(f"OpenRouter API response status: {response.status_code}")
+        
         if response.status_code != 200:
             # Log more detailed error information
             error_detail = f"Status code: {response.status_code}, Response: {response.text}"
             print(f"OpenRouter API error: {error_detail}")
-            raise HTTPException(status_code=response.status_code, detail=error_detail)
-
-        # Log successful response
-        print(f"OpenRouter API response status: {response.status_code}")
-        
-        ai_response = response.json()
-        print(f"OpenRouter API response: {json.dumps(ai_response, indent=2)}")
-        
-        content = ai_response["choices"][0]["message"]["content"]
-
-        try:
-            parsed = json.loads(content)
-            for mod in parsed.get("modules", []):
-                mod.setdefault("steps", [])
-                mod.setdefault("example", "")
+            
             # Cerrar la conexión a la base de datos antes de retornar la respuesta
             if 'conn' in locals() and conn:
                 conn.close()
-            return CourseResponse(**parsed)
+                
+            raise HTTPException(
+                status_code=response.status_code, 
+                detail=f"Error en la generación del curso: {error_detail}"
+            )
+
+        ai_response = response.json()
+        if "choices" not in ai_response or not ai_response["choices"]:
+            print("Error: No choices in API response")
+            print(f"Full response: {json.dumps(ai_response, indent=2)}")
+            
+            # Cerrar la conexión a la base de datos antes de retornar la respuesta
+            if 'conn' in locals() and conn:
+                conn.close()
+                
+            raise HTTPException(status_code=500, detail="La API no devolvió resultados válidos")
+            
+        print("API response received successfully")
+        content = ai_response["choices"][0]["message"]["content"]
+        print(f"Content length: {len(content)} characters")
+        
+        # Guardar el contenido en un archivo para depuración
+        with open("last_course_response.txt", "w", encoding="utf-8") as f:
+            f.write(content)
+            
+        print("Content saved to last_course_response.txt for debugging")
+
+        try:
+            print("Parsing JSON response...")
+            parsed = json.loads(content)
+            print("JSON parsed successfully")
+            
+            # Asegurarnos de que roadmap sea un diccionario
+            if "roadmap" in parsed and isinstance(parsed["roadmap"], list):
+                print("Converting roadmap from list to dictionary")
+                # Convertir array a diccionario si viene en formato antiguo
+                parsed["roadmap"] = {"Ruta de aprendizaje": parsed["roadmap"]}
+                
+            # Asegurarnos de que todos los módulos tengan los campos requeridos
+            print(f"Processing {len(parsed.get('modules', []))} modules")
+            for mod in parsed.get("modules", []):
+                mod.setdefault("steps", [])
+                mod.setdefault("example", "")
+                
+            # Cerrar la conexión a la base de datos antes de retornar la respuesta
+            if 'conn' in locals() and conn:
+                conn.close()
+                
+            # Validar que todas las propiedades requeridas estén presentes
+            required_props = ["title", "objective", "prerequisites", "definitions", "roadmap", "modules", "resources", "faqs", "errors", "downloads", "summary"]
+            missing_props = [prop for prop in required_props if prop not in parsed]
+            
+            if missing_props:
+                print(f"Missing properties in response: {missing_props}")
+                for prop in missing_props:
+                    parsed[prop] = [] if prop in ["prerequisites", "definitions", "modules", "resources", "faqs", "errors", "downloads"] else ""
+                    if prop == "roadmap":
+                        parsed[prop] = {"General": []}
+            
+            print("Creating CourseResponse object")
+            response_obj = CourseResponse(**parsed)
+            print("CourseResponse created successfully")
+            return response_obj
         except json.JSONDecodeError:
+            print("Error decoding JSON, falling back to text processing")
             lines = content.split('\n')
             
+            print("Extracting title and objective")
             title = next((line.replace("Título:", "").strip() for line in lines if line.lower().startswith("título:")), request.topic)
             objective = next((line.replace("Objetivo:", "").strip() for line in lines if line.lower().startswith("objetivo:")), f"Aprender {request.topic}")
             summary = next((line.replace("Resumen:", "").strip() for line in lines if line.lower().startswith("resumen:")), "")
 
+            print("Extracting prerequisites and definitions")
             prerequisites = extract_list("Conceptos previos:", lines)
             definitions = extract_list("Definiciones clave:", lines)
-            roadmap = extract_list("Mapa de aprendizaje:", lines)
+            
+            print("Processing roadmap")
+            # Extraer mapa de aprendizaje y procesarlo como un diccionario de secciones
+            roadmap_items = extract_list("Mapa de aprendizaje:", lines)
+            roadmap = {}
+            current_section = "General"
+            roadmap[current_section] = []
+            
+            # Intentar convertir los elementos del roadmap en secciones
+            for item in roadmap_items:
+                # Verificar si es un título de sección (contiene ":" al final)
+                if ":" in item:
+                    parts = item.split(":", 1)
+                    current_section = parts[0].strip()
+                    items = parts[1].strip().split(",")
+                    roadmap[current_section] = [i.strip() for i in items if i.strip()]
+                else:
+                    # Si no es una sección, añadir al último grupo
+                    roadmap[current_section].append(item)
+            
+            # Si no pudimos extraer secciones correctamente, usar un formato simple
+            if len(roadmap) == 1 and len(roadmap["General"]) == len(roadmap_items):
+                roadmap = {"Ruta de aprendizaje": roadmap_items}
+                
+            print("Extracting FAQs, errors, downloads, and resources")
             faqs = extract_list("Preguntas frecuentes:", lines)
             errors = extract_list("Errores comunes:", lines)
             downloads = extract_list("Recursos descargables:", lines)
             resources = extract_list("Recursos adicionales:", lines)
 
+            print("Extracting modules")
             modules = []
             current_module = None
             for line in lines:
@@ -540,17 +634,29 @@ async def generate_course(request: CourseRequest, current_user: dict = Depends(g
                     current_module = {"title": line.strip(), "steps": [], "example": ""}
                 elif current_module:
                     if "ejemplo" in line.lower():
-                        current_module["example"] = line.split(":", 1)[1].strip()
+                        current_module["example"] = line.split(":", 1)[1].strip() if ":" in line else ""
                     elif line.strip().startswith("-") or line.strip().startswith("•"):
                         current_module["steps"].append(line.strip("-• ").strip())
             if current_module:
                 modules.append(current_module)
+                
+            print(f"Extracted {len(modules)} modules")
+            
+            # Si no se encontraron módulos, crear uno por defecto
+            if not modules:
+                print("No modules found, creating default module")
+                modules = [{
+                    "title": f"Módulo 1: Introducción a {request.topic}",
+                    "steps": ["Conocer los conceptos básicos", "Realizar ejercicios prácticos", "Revisar los recursos adicionales"],
+                    "example": ""
+                }]
 
             # Cerrar la conexión a la base de datos antes de retornar la respuesta
             if 'conn' in locals() and conn:
                 conn.close()
 
-            return CourseResponse(
+            print("Creating CourseResponse object from text parse")
+            response_obj = CourseResponse(
                 title=title,
                 objective=objective,
                 prerequisites=prerequisites,
@@ -563,6 +669,8 @@ async def generate_course(request: CourseRequest, current_user: dict = Depends(g
                 downloads=downloads,
                 summary=summary
             )
+            print("CourseResponse created successfully from text parse")
+            return response_obj
 
     except Exception as e:
         # Add more detailed error logging
@@ -570,7 +678,59 @@ async def generate_course(request: CourseRequest, current_user: dict = Depends(g
         error_trace = traceback.format_exc()
         print(f"Exception in generate_course: {str(e)}")
         print(f"Traceback: {error_trace}")
-        raise HTTPException(status_code=500, detail=str(e))
+        
+        # Intentar proporcionar un error más específico y útil
+        error_message = str(e)
+        if "validation error" in error_message.lower():
+            error_message = "Error de validación en los datos del curso. Los datos no tienen el formato esperado."
+        elif "roadmap" in error_message.lower():
+            error_message = "Error en el formato de la hoja de ruta del curso. Intenta de nuevo."
+        elif "unexpected keyword argument" in error_message.lower():
+            error_message = "Error en la estructura de datos del curso. Algunos campos no son válidos."
+        elif "not a valid value" in error_message.lower():
+            error_message = "Uno de los valores devueltos por la API no es válido. Intenta de nuevo."
+        elif "TypeError" in error_message or "NoneType" in error_message:
+            error_message = "Error de tipo de datos en la respuesta. Intenta de nuevo con un tema diferente."
+        elif "IndexError" in error_message:
+            error_message = "Error en el procesamiento de la respuesta. Intenta de nuevo con un tema más específico."
+        elif "KeyError" in error_message:
+            error_message = "Error en la estructura de datos. Falta alguna propiedad requerida."
+        
+        # Crear una respuesta predeterminada como fallback para casos extremos
+        try:
+            if 'conn' in locals() and conn:
+                conn.close()
+                
+            # Proporcionar un curso mínimo fallback
+            fallback_response = CourseResponse(
+                title=f"Curso sobre {request.topic}",
+                objective=f"Aprender sobre {request.topic}",
+                prerequisites=[],
+                definitions=[],
+                roadmap={"Fundamentos": [f"Conceptos básicos de {request.topic}", f"Introducción a {request.topic}"]},
+                modules=[{
+                    "title": f"Módulo 1: Introducción a {request.topic}",
+                    "steps": ["Conocer los conceptos básicos", "Realizar ejercicios prácticos"],
+                    "example": ""
+                }],
+                resources=[],
+                faqs=[],
+                errors=[],
+                downloads=[],
+                summary=f"Este curso te enseñará los fundamentos de {request.topic}."
+            )
+            
+            # Agregar mensaje de error indicando que este es un curso de fallback
+            print("Returning fallback course due to error")
+            return fallback_response
+            
+        except Exception as inner_e:
+            print(f"Error creating fallback response: {str(inner_e)}")
+            # Cerrar la conexión si está abierta
+            if 'conn' in locals() and conn:
+                conn.close()
+                
+            raise HTTPException(status_code=500, detail=error_message)
 
 @app.post("/save-course")
 async def save_course(course_data: SavedCourseRequest, current_user: dict = Depends(get_current_user)):
@@ -923,6 +1083,212 @@ async def manual_approve_payment(payment_data: dict, current_user: dict = Depend
         "success": False,
         "message": result.get("error", "No se pudo aprobar el pago simulado")
     }
+
+@app.post("/replace-topic")
+async def replace_topic(request: TopicReplacementRequest, current_user: dict = Depends(get_current_user)):
+    """
+    Endpoint para reemplazar un tema que el usuario ya conoce por uno nuevo
+    """
+    # Verificar que el curso pertenezca al usuario
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        "SELECT * FROM courses WHERE id = ? AND user_id = ?",
+        (request.course_id, current_user["id"])
+    )
+    
+    course = cursor.fetchone()
+    conn.close()
+    
+    if not course:
+        raise HTTPException(status_code=404, detail="Curso no encontrado o no pertenece al usuario")
+    
+    # Preparar el prompt para generar un tema de reemplazo
+    prompt = (
+        f"Actúa como un experto en educación y diseño instruccional. El usuario ya conoce el tema: '{request.current_topic}' "
+        f"que forma parte de la sección '{request.section}' de un curso. "
+        f"Nivel de experiencia del usuario: {request.experience_level}\n\n"
+        "Necesito que generes UN SOLO tema alternativo relacionado pero diferente que pueda reemplazarlo en el plan de estudio. "
+        "El tema debe ser del mismo nivel de complejidad y mantener la coherencia con la sección general. "
+        "SOLO proporciona el nuevo tema, sin explicaciones adicionales, en máximo 15 palabras, sin numeración ni viñetas."
+    )
+    
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "model": "mistralai/mistral-7b-instruct:free",
+        "stream": False,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.7,
+        "max_tokens": 100
+    }
+
+    try:
+        response = requests.post(OPENROUTER_API_URL, headers=headers, json=data)
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail=f"Error en la API: {response.text}")
+        
+        ai_response = response.json()
+        new_topic = ai_response["choices"][0]["message"]["content"].strip()
+        
+        # Limpieza adicional para asegurar formato adecuado
+        new_topic = new_topic.replace("\"", "").replace("'", "")
+        new_topic = re.sub(r"^\d+\.\s*", "", new_topic)  # Eliminar numeración inicial si existe
+        new_topic = re.sub(r"^[•\-]\s*", "", new_topic)  # Eliminar viñetas si existen
+        
+        return {"replacement_topic": new_topic}
+    
+    except Exception as e:
+        print(f"Error al generar tema de reemplazo: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"No se pudo generar un tema de reemplazo: {str(e)}")
+
+@app.post("/replace-module")
+async def replace_module(request: ModuleReplacementRequest, current_user: dict = Depends(get_current_user)):
+    """
+    Endpoint para reemplazar un módulo que el usuario ya conoce por uno nuevo
+    """
+    # Verificar que el curso pertenezca al usuario
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        "SELECT * FROM courses WHERE id = ? AND user_id = ?",
+        (request.course_id, current_user["id"])
+    )
+    
+    course = cursor.fetchone()
+    conn.close()
+    
+    if not course:
+        raise HTTPException(status_code=404, detail="Curso no encontrado o no pertenece al usuario")
+    
+    # Preparar el prompt para generar un módulo de reemplazo
+    prompt = (
+        f"Actúa como un experto en educación y diseño instruccional. Estás diseñando un curso sobre el tema principal relacionado con el módulo: '{request.current_module_title}'. "
+        f"El usuario ha indicado que ya conoce el contenido de este módulo específico y necesita un módulo alternativo sobre un tema estrechamente relacionado. "
+        f"Nivel de experiencia del usuario: {request.experience_level}.\n\n"
+        "INSTRUCCIONES IMPORTANTES:\n"
+        "1. El nuevo módulo debe mantener relación directa con el tema principal del módulo original.\n"
+        "2. Debe cubrir un aspecto diferente pero complementario al módulo original.\n"
+        "3. Mantener el mismo idioma (español) que el título del módulo original.\n"
+        "4. El nivel de complejidad debe ser similar al del módulo original.\n"
+        "5. Los pasos deben ser concretos y específicos, no genéricos.\n"
+        "6. El ejemplo debe ser práctico y directamente relacionado con los pasos descritos.\n\n"
+        "Responde con un objeto JSON con exactamente esta estructura:\n"
+        "{\n"
+        '  "title": "Título específico y descriptivo del nuevo módulo",\n'
+        '  "steps": ["Paso 1 específico", "Paso 2 específico", "Paso 3 específico", "Paso 4 específico"],\n'
+        '  "example": "Un ejemplo práctico relacionado con los pasos (25-50 palabras)"\n'
+        "}\n\n"
+        "RECUERDA: Mantener coherencia temática con el módulo original, usar español, y proporcionar contenido específico y útil."
+    )
+    
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "model": "mistralai/mistral-7b-instruct:free",
+        "stream": False,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.7,
+        "max_tokens": 500
+    }
+
+    try:
+        print(f"Solicitando reemplazo de módulo: {request.current_module_title}")
+        response = requests.post(OPENROUTER_API_URL, headers=headers, json=data)
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail=f"Error en la API: {response.text}")
+        
+        ai_response = response.json()
+        content = ai_response["choices"][0]["message"]["content"].strip()
+        
+        # Limpieza de la respuesta
+        content = re.sub(r"^```json\s*", "", content)
+        content = re.sub(r"\s*```$", "", content)
+        
+        try:
+            # Intentar analizar el JSON
+            new_module = json.loads(content)
+            
+            # Verificar que tenga la estructura esperada
+            if "title" not in new_module:
+                new_module["title"] = f"Módulo alternativo a {request.current_module_title}"
+            if "steps" not in new_module or not new_module["steps"]:
+                new_module["steps"] = ["Conocer los conceptos básicos", "Realizar ejercicios prácticos"]
+            if "example" not in new_module:
+                new_module["example"] = ""
+                
+            return {"replacement_module": new_module}
+            
+        except json.JSONDecodeError:
+            # Si no es un JSON válido, intentar extraer información útil
+            print(f"Error decodificando JSON de módulo reemplazado: {content}")
+            
+            # Crear un módulo de respaldo
+            module_title = request.current_module_title.lower()
+            fallback_module = {}
+            
+            # Intentar extraer el tema principal del título
+            if "gramática" in module_title:
+                fallback_module = {
+                    "title": "Uso práctico de la gramática en contextos cotidianos",
+                    "steps": [
+                        "Identificar errores gramaticales comunes en conversaciones",
+                        "Aplicar reglas gramaticales en la redacción de correos electrónicos",
+                        "Practicar la gramática mediante ejercicios de reformulación",
+                        "Adaptar el lenguaje a diferentes contextos formales e informales"
+                    ],
+                    "example": "Analiza cómo cambia el significado en: 'Los estudiantes que aprobaron el examen fueron premiados' vs 'Los estudiantes, que aprobaron el examen, fueron premiados'."
+                }
+            elif "inglés" in module_title or "ingles" in module_title:
+                fallback_module = {
+                    "title": "Expresiones idiomáticas en inglés para conversaciones naturales",
+                    "steps": [
+                        "Reconocer expresiones idiomáticas comunes en inglés",
+                        "Comprender el significado figurado vs. literal",
+                        "Practicar el uso contextual de modismos",
+                        "Incorporar expresiones en conversaciones cotidianas"
+                    ],
+                    "example": "En lugar de decir 'It's raining a lot', un hablante nativo diría 'It's raining cats and dogs', que literalmente significa 'llueven gatos y perros' pero se usa para expresar lluvia intensa."
+                }
+            elif "programación" in module_title or "programacion" in module_title or "python" in module_title:
+                fallback_module = {
+                    "title": "Depuración efectiva de código y manejo de errores",
+                    "steps": [
+                        "Identificar tipos comunes de errores (sintaxis, lógica, tiempo de ejecución)",
+                        "Utilizar técnicas de depuración sistemática",
+                        "Implementar manejo de excepciones adecuado",
+                        "Aplicar pruebas unitarias para prevenir errores"
+                    ],
+                    "example": "En lugar de usar print() para depurar, utiliza un depurador como pdb en Python: import pdb; pdb.set_trace() para examinar variables en tiempo de ejecución."
+                }
+            else:
+                # Fallback genérico pero más específico que el anterior
+                fallback_module = {
+                    "title": f"Aplicaciones prácticas: {request.current_module_title}",
+                    "steps": [
+                        f"Identificar situaciones reales donde aplicar los conocimientos de {request.current_module_title}",
+                        "Resolver problemas prácticos usando las técnicas aprendidas",
+                        "Adaptar los conceptos teóricos a diferentes contextos",
+                        "Evaluar y mejorar resultados mediante análisis crítico"
+                    ],
+                    "example": f"Frente a un problema real, aplica los conceptos de {request.current_module_title} siguiendo estos pasos: 1) Identifica el problema, 2) Analiza posibles soluciones, 3) Implementa la mejor alternativa, 4) Evalúa el resultado."
+                }
+            
+            return {"replacement_module": fallback_module}
+    
+    except Exception as e:
+        print(f"Error al generar módulo de reemplazo: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"No se pudo generar un módulo de reemplazo: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

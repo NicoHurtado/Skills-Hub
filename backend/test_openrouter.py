@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # API credentials - try to use environment variable if available
-OPENROUTER_API_KEY = "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"
+OPENROUTER_API_KEY = "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"
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 def test_api():
@@ -27,9 +27,9 @@ def test_api():
     
     # Test multiple models
     models_to_test = [
-        "openai/gpt-3.5-turbo",
-        "anthropic/claude-instant-v1",
-        "mistralai/mistral-7b-instruct"
+        "mistralai/mistral-7b-instruct:free",
+        "openchat/openchat-7b:free",
+        "google/gemma-7b-it:free"
     ]
     
     for model in models_to_test:

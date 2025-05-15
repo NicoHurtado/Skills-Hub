@@ -81,6 +81,26 @@ export const courseService = {
       throw new Error(error.response?.data?.detail || 'Failed to delete course');
     }
   },
+  
+  // Solicitar un reemplazo para un tema que ya conoces
+  requestTopicReplacement: async (requestData) => {
+    try {
+      const response = await api.post('/replace-topic', requestData);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to get topic replacement');
+    }
+  },
+  
+  // Solicitar un reemplazo para un módulo que ya conoces
+  requestModuleReplacement: async (requestData) => {
+    try {
+      const response = await api.post('/replace-module', requestData);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to get module replacement');
+    }
+  },
 };
 
 export default api; 
