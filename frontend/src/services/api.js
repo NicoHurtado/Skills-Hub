@@ -34,7 +34,11 @@ export const courseService = {
       });
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.detail || 'Failed to generate course');
+      // Para 403 con need_upgrade, queremos pasar todos los detalles del error
+      if (error.response?.status === 403 && error.response?.data?.detail?.need_upgrade) {
+        throw { ...error.response.data.detail, isSubscriptionLimitError: true };
+      }
+      throw new Error(error.response?.data?.detail?.message || error.response?.data?.detail || 'Failed to generate course');
     }
   },
   

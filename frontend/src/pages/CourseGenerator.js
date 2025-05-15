@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiCpu, FiArrowRight, FiCheck, FiInfo } from 'react-icons/fi';
 import Layout from '../components/Layout';
+import SubscriptionModal from '../components/SubscriptionModal';
 import { courseService } from '../services/api';
+import axios from 'axios';
 
 const experienceLevels = [
   { id: 'beginner', name: 'Principiante', description: 'Poco o ningún conocimiento previo.' },
@@ -26,6 +28,11 @@ const CourseGenerator = () => {
   const [availableTime, setAvailableTime] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
+  
+  // Estados para el modal de suscripción
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [availablePlans, setAvailablePlans] = useState([]);
+  const [currentTier, setCurrentTier] = useState('free');
   
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -74,8 +81,41 @@ const CourseGenerator = () => {
       navigate(`/courses/${savedCourse.id}`);
     } catch (error) {
       console.error('Error generating course:', error);
-      setError('Error al generar el curso. Por favor, intenta de nuevo.');
+      
+      // Verificar si es un error de límite de suscripción
+      if (error && error.isSubscriptionLimitError) {
+        setAvailablePlans(error.available_plans || []);
+        setCurrentTier(error.current_tier || 'free');
+        setShowSubscriptionModal(true);
+        setError('Has alcanzado el límite de cursos de tu plan actual.');
+      } else {
+        setError('Error al generar el curso. Por favor, intenta de nuevo.');
+      }
       setIsGenerating(false);
+    }
+  };
+  
+  const handleSelectPlan = async (plan) => {
+    try {
+      // Aquí implementarías la lógica para suscribirse al plan
+      const API_URL = 'http://localhost:8000';
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.post(`${API_URL}/subscribe`, 
+        { tier_id: plan.id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      // Cerrar el modal y mostrar un mensaje de éxito
+      setShowSubscriptionModal(false);
+      setError('');
+      alert(`¡Te has suscrito al plan ${plan.name}! Ahora puedes crear hasta ${plan.course_limit === -1 ? 'ilimitados' : plan.course_limit} cursos.`);
+      
+      // Opcionalmente, intentar generar el curso nuevamente
+      // handleSubmit(new Event('submit'));
+    } catch (err) {
+      console.error('Error al suscribirse:', err);
+      setError('Error al procesar la suscripción. Por favor, intenta de nuevo.');
     }
   };
   
@@ -201,6 +241,15 @@ const CourseGenerator = () => {
             </motion.button>
           </div>
         </form>
+        
+        {/* Modal de suscripción */}
+        <SubscriptionModal 
+          isOpen={showSubscriptionModal} 
+          onClose={() => setShowSubscriptionModal(false)} 
+          plans={availablePlans}
+          onSelectPlan={handleSelectPlan}
+          currentTier={currentTier}
+        />
       </div>
     </Layout>
   );

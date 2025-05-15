@@ -1,13 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { FiHome, FiPlus, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
+import { FiHome, FiPlus, FiLogOut, FiMenu, FiX, FiCreditCard } from 'react-icons/fi';
+import axios from 'axios';
 
 const Layout = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [subscriptionPlan, setSubscriptionPlan] = useState('Free');
+  const [planLoading, setPlanLoading] = useState(true);
+
+  useEffect(() => {
+    // Solo cargar si el usuario está autenticado
+    if (user) {
+      const fetchSubscriptionStatus = async () => {
+        try {
+          const response = await axios.get('http://localhost:8000/subscription-status', {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          
+          setSubscriptionPlan(response.data.tier.name);
+          setPlanLoading(false);
+        } catch (err) {
+          console.error('Error fetching subscription:', err);
+          setPlanLoading(false);
+        }
+      };
+      
+      fetchSubscriptionStatus();
+    }
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -17,6 +43,7 @@ const Layout = ({ children }) => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: FiHome },
     { name: 'Crear Curso', href: '/generate', icon: FiPlus },
+    { name: 'Planes', href: '/plans', icon: FiCreditCard },
   ];
 
   return (
@@ -83,6 +110,11 @@ const Layout = ({ children }) => {
               <div className="ml-3">
                 <p className="text-sm font-medium text-neutral-700">{user.username}</p>
                 <p className="text-xs text-neutral-500 truncate">{user.email}</p>
+                {!planLoading && (
+                  <div className="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                    Plan {subscriptionPlan}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -140,6 +172,11 @@ const Layout = ({ children }) => {
               <div className="ml-3">
                 <p className="text-sm font-medium text-neutral-700">{user.username}</p>
                 <p className="text-xs text-neutral-500 truncate">{user.email}</p>
+                {!planLoading && (
+                  <div className="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                    Plan {subscriptionPlan}
+                  </div>
+                )}
               </div>
             </div>
           )}

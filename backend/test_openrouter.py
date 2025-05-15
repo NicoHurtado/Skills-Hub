@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # API credentials - try to use environment variable if available
-OPENROUTER_API_KEY = "sk-or-v1-8fc3f5774abc44bd8c85e65acf0584d3"
+OPENROUTER_API_KEY = "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"
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 def test_api():

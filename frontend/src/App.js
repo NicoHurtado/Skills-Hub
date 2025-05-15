@@ -9,6 +9,9 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import CourseGenerator from './pages/CourseGenerator';
 import CourseView from './pages/CourseView';
+import PlansPage from './pages/PlansPage';
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
+import SimulatedPaymentPage from './pages/SimulatedPaymentPage';
 import NotFound from './pages/NotFound';
 
 // Protected Route Component
@@ -50,6 +53,21 @@ function App() {
       <Route path="/courses/:courseId" element={
         <ProtectedRoute>
           <CourseView />
+        </ProtectedRoute>
+      } />
+      <Route path="/plans" element={
+        <ProtectedRoute>
+          <PlansPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/payment-success" element={
+        <ProtectedRoute>
+          <PaymentSuccessPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/simulated-payment" element={
+        <ProtectedRoute>
+          <SimulatedPaymentPage />
         </ProtectedRoute>
       } />
       
