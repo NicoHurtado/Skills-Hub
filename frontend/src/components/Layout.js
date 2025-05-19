@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { FiHome, FiPlus, FiLogOut, FiMenu, FiX, FiCreditCard } from 'react-icons/fi';
 import axios from 'axios';
+import ThemeToggle from './ThemeToggle';
+import { ThemeContext } from '../context/ThemeContext';
 
 const Layout = ({ children }) => {
   const { user, logout } = useAuth();
+  const { darkMode } = useContext(ThemeContext);
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -46,27 +49,40 @@ const Layout = ({ children }) => {
     { name: 'Planes', href: '/plans', icon: FiCreditCard },
   ];
 
+  // Simplificamos las clases para asegurar la visibilidad del texto
+  const bgClass = darkMode ? 'bg-neutral-900' : 'bg-white';
+  const sidebarClass = darkMode ? 'bg-neutral-800 border-neutral-700' : 'bg-white border-neutral-200';
+  const headerClass = darkMode ? 'bg-neutral-800 border-neutral-700' : 'bg-white border-neutral-200';
+  const textClass = darkMode ? 'text-white' : 'text-neutral-900';
+  const textSecondaryClass = darkMode ? 'text-neutral-300' : 'text-neutral-600';
+  const navItemActiveClass = darkMode 
+    ? 'bg-primary-900/30 text-primary-400' 
+    : 'bg-primary-50 text-primary-700';
+  const navItemClass = darkMode
+    ? 'text-white hover:bg-neutral-700/50'
+    : 'text-neutral-900 hover:bg-neutral-100';
+
   return (
-    <div className="h-screen flex overflow-hidden bg-neutral-50">
+    <div className={`h-screen flex overflow-hidden ${bgClass} transition-colors duration-300`}>
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-neutral-600 bg-opacity-75 md:hidden"
+          className="fixed inset-0 z-40 bg-neutral-900 bg-opacity-75 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Mobile sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 flex flex-col z-50 w-64 bg-white shadow-apple-lg transition-transform duration-300 ease-in-out transform ${
+        className={`fixed inset-y-0 left-0 flex flex-col z-50 w-64 shadow-xl transition-transform duration-300 ease-in-out transform ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:hidden`}
+        } md:hidden ${sidebarClass}`}
       >
-        <div className="flex items-center justify-between p-4 border-b border-neutral-200">
+        <div className={`flex items-center justify-between p-4 border-b ${headerClass}`}>
           <h2 className="text-xl font-semibold text-primary-600">Prompt2Course</h2>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="p-2 rounded-md text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100"
+            className={`p-2 rounded-md ${textSecondaryClass} hover:${textClass} hover:bg-neutral-100 dark:hover:bg-neutral-700`}
           >
             <FiX size={24} />
           </button>
@@ -82,14 +98,14 @@ const Layout = ({ children }) => {
                   to={item.href}
                   className={`flex items-center px-4 py-3 rounded-lg text-sm font-medium ${
                     isActive
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-neutral-700 hover:bg-neutral-100'
+                      ? navItemActiveClass
+                      : navItemClass
                   }`}
                 >
                   <item.icon
                     size={20}
                     className={`mr-3 ${
-                      isActive ? 'text-primary-600' : 'text-neutral-500'
+                      isActive ? 'text-primary-600 dark:text-primary-400' : textSecondaryClass
                     }`}
                   />
                   {item.name}
@@ -99,7 +115,12 @@ const Layout = ({ children }) => {
           </nav>
         </div>
 
-        <div className="p-4 border-t border-neutral-200">
+        <div className={`p-4 border-t ${headerClass}`}>
+          {/* Theme Toggle */}
+          <div className="mb-4">
+            <ThemeToggle />
+          </div>
+          
           {user && (
             <div className="flex items-center mb-4">
               <div className="flex-shrink-0">
@@ -108,10 +129,10 @@ const Layout = ({ children }) => {
                 </div>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-neutral-700">{user.username}</p>
-                <p className="text-xs text-neutral-500 truncate">{user.email}</p>
+                <p className={`text-sm font-medium ${textClass}`}>{user.username}</p>
+                <p className={`text-xs ${textSecondaryClass} truncate`}>{user.email}</p>
                 {!planLoading && (
-                  <div className="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                  <div className="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-400">
                     Plan {subscriptionPlan}
                   </div>
                 )}
@@ -120,17 +141,17 @@ const Layout = ({ children }) => {
           )}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center px-4 py-2 text-sm text-neutral-700 rounded-lg hover:bg-neutral-100"
+            className={`w-full flex items-center px-4 py-2 text-sm ${textClass} rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700/50`}
           >
-            <FiLogOut className="mr-3 text-neutral-500" />
+            <FiLogOut className={`mr-3 ${textSecondaryClass}`} />
             Cerrar sesión
           </button>
         </div>
       </div>
 
       {/* Desktop sidebar */}
-      <div className="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 border-r border-neutral-200 bg-white">
-        <div className="flex items-center h-16 px-4 bg-white border-b border-neutral-200">
+      <div className={`hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 border-r ${sidebarClass}`}>
+        <div className={`flex items-center justify-between h-16 px-4 border-b ${headerClass}`}>
           <h2 className="text-xl font-semibold text-primary-600">Prompt2Course</h2>
         </div>
 
@@ -144,14 +165,14 @@ const Layout = ({ children }) => {
                   to={item.href}
                   className={`flex items-center px-4 py-3 rounded-lg text-sm font-medium ${
                     isActive
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-neutral-700 hover:bg-neutral-100'
+                      ? navItemActiveClass
+                      : navItemClass
                   }`}
                 >
                   <item.icon
                     size={20}
                     className={`mr-3 ${
-                      isActive ? 'text-primary-600' : 'text-neutral-500'
+                      isActive ? 'text-primary-600 dark:text-primary-400' : textSecondaryClass
                     }`}
                   />
                   {item.name}
@@ -161,7 +182,12 @@ const Layout = ({ children }) => {
           </nav>
         </div>
 
-        <div className="p-4 border-t border-neutral-200">
+        <div className={`p-4 border-t ${headerClass}`}>
+          {/* Theme Toggle */}
+          <div className="mb-4">
+            <ThemeToggle />
+          </div>
+          
           {user && (
             <div className="flex items-center mb-4">
               <div className="flex-shrink-0">
@@ -170,10 +196,10 @@ const Layout = ({ children }) => {
                 </div>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-neutral-700">{user.username}</p>
-                <p className="text-xs text-neutral-500 truncate">{user.email}</p>
+                <p className={`text-sm font-medium ${textClass}`}>{user.username}</p>
+                <p className={`text-xs ${textSecondaryClass} truncate`}>{user.email}</p>
                 {!planLoading && (
-                  <div className="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                  <div className="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-400">
                     Plan {subscriptionPlan}
                   </div>
                 )}
@@ -182,9 +208,9 @@ const Layout = ({ children }) => {
           )}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center px-4 py-2 text-sm text-neutral-700 rounded-lg hover:bg-neutral-100"
+            className={`w-full flex items-center px-4 py-2 text-sm ${textClass} rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700/50`}
           >
-            <FiLogOut className="mr-3 text-neutral-500" />
+            <FiLogOut className={`mr-3 ${textSecondaryClass}`} />
             Cerrar sesión
           </button>
         </div>
@@ -193,14 +219,20 @@ const Layout = ({ children }) => {
       {/* Main content */}
       <div className="flex flex-col w-0 flex-1 md:ml-64">
         {/* Mobile header */}
-        <div className="flex items-center justify-between md:hidden h-16 bg-white px-4 border-b border-neutral-200">
+        <div className={`flex items-center justify-between md:hidden h-16 px-4 border-b ${headerClass}`}>
           <h2 className="text-xl font-semibold text-primary-600">Prompt2Course</h2>
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-md text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100"
-          >
-            <FiMenu size={24} />
-          </button>
+          
+          <div className="flex items-center space-x-4">
+            {/* Theme toggle en la barra superior móvil */}
+            <ThemeToggle />
+            
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className={`p-2 rounded-md ${textSecondaryClass} hover:${textClass} hover:bg-neutral-100 dark:hover:bg-neutral-700`}
+            >
+              <FiMenu size={24} />
+            </button>
+          </div>
         </div>
         
         {/* Page content */}

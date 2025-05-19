@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiPlus, FiCalendar, FiClock, FiChevronRight, FiTrash2 } from 'react-icons/fi';
 import Layout from '../components/Layout';
 import { courseService } from '../services/api';
+import { ThemeContext } from '../context/ThemeContext';
 
 const CourseCard = ({ course, onDelete }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const { darkMode } = useContext(ThemeContext);
   
   const handleDelete = async () => {
     if (isDeleting) return;
@@ -32,7 +34,7 @@ const CourseCard = ({ course, onDelete }) => {
     >
       {showConfirm ? (
         <div className="p-4 flex flex-col items-center justify-center h-full">
-          <p className="text-neutral-700 mb-4 text-center">
+          <p className={`mb-4 text-center ${darkMode ? 'text-white' : 'text-neutral-900'}`}>
             ¿Estás seguro de que deseas eliminar este curso?
           </p>
           <div className="flex space-x-3">
@@ -63,29 +65,37 @@ const CourseCard = ({ course, onDelete }) => {
         <>
           <button
             onClick={() => setShowConfirm(true)}
-            className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-red-500 rounded-full hover:bg-red-50 transition-colors duration-200"
+            className={`absolute top-4 right-4 p-2 text-neutral-400 hover:text-red-500 rounded-full ${
+              darkMode ? 'hover:bg-red-900/30' : 'hover:bg-red-50'
+            } transition-colors duration-200`}
             aria-label="Delete course"
           >
             <FiTrash2 />
           </button>
           
           <Link to={`/courses/${course.id}`} className="block">
-            <h3 className="text-lg font-medium text-neutral-900 line-clamp-2 mb-4 pr-8">
+            <h3 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-neutral-900'} line-clamp-2 mb-4 pr-8`}>
               {course.title}
             </h3>
             
-            <div className="flex items-center text-sm text-neutral-500 mb-2">
+            <div className={`flex items-center text-sm ${darkMode ? 'text-neutral-300' : 'text-neutral-600'} mb-2`}>
               <FiClock className="mr-2" />
               <span>{course.available_time}</span>
             </div>
             
-            <div className="flex items-center text-sm text-neutral-500 mb-4">
+            <div className={`flex items-center text-sm ${darkMode ? 'text-neutral-300' : 'text-neutral-600'} mb-4`}>
               <FiCalendar className="mr-2" />
               <span>{new Date(course.created_at).toLocaleDateString()}</span>
             </div>
             
-            <div className="flex items-center justify-between mt-4 pt-4 border-t border-neutral-100">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+            <div className={`flex items-center justify-between mt-4 pt-4 border-t ${
+              darkMode ? 'border-neutral-700/50' : 'border-neutral-100'
+            }`}>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                darkMode 
+                  ? 'bg-primary-900/30 text-primary-400' 
+                  : 'bg-primary-100 text-primary-800'
+              }`}>
                 {course.experience_level}
               </span>
               
@@ -102,6 +112,7 @@ const Dashboard = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { darkMode } = useContext(ThemeContext);
   
   const fetchCourses = async () => {
     try {
@@ -128,8 +139,8 @@ const Dashboard = () => {
     <Layout>
       <div className="mb-6 sm:flex sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">Mis Cursos</h1>
-          <p className="mt-1 text-sm text-neutral-600">
+          <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-neutral-900'}`}>Mis Cursos</h1>
+          <p className={`mt-1 text-sm ${darkMode ? 'text-neutral-300' : 'text-neutral-600'}`}>
             Accede a tus cursos guardados o crea uno nuevo.
           </p>
         </div>
@@ -149,16 +160,28 @@ const Dashboard = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
         </div>
       ) : error ? (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg" role="alert">
+        <div className={`${
+          darkMode 
+            ? 'bg-red-900/20 border-red-800/30 text-red-400' 
+            : 'bg-red-50 border-red-200 text-red-700'
+        } border px-4 py-3 rounded-lg`} role="alert">
           <span>{error}</span>
         </div>
       ) : courses.length === 0 ? (
-        <div className="bg-neutral-50 rounded-2xl p-12 text-center">
-          <div className="mx-auto h-24 w-24 text-neutral-400 flex items-center justify-center rounded-full bg-white mb-4">
+        <div className={`${
+          darkMode 
+            ? 'bg-neutral-800/50' 
+            : 'bg-neutral-50'
+        } rounded-2xl p-12 text-center`}>
+          <div className={`mx-auto h-24 w-24 ${
+            darkMode 
+              ? 'text-neutral-500 bg-neutral-800' 
+              : 'text-neutral-400 bg-white'
+          } flex items-center justify-center rounded-full mb-4`}>
             <FiPlus className="h-12 w-12" />
           </div>
-          <h3 className="text-lg font-medium text-neutral-900 mb-2">No tienes cursos guardados</h3>
-          <p className="text-neutral-600 mb-6">
+          <h3 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-neutral-900'} mb-2`}>No tienes cursos guardados</h3>
+          <p className={`${darkMode ? 'text-neutral-300' : 'text-neutral-600'} mb-6`}>
             Crea tu primer curso personalizado y guárdalo para acceder luego.
           </p>
           <Link

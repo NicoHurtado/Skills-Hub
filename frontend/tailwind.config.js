@@ -4,6 +4,7 @@ module.exports = {
     "./src/**/*.{js,jsx,ts,tsx}",
     "./public/index.html",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       fontFamily: {
@@ -58,5 +59,9 @@ module.exports = {
   },
   plugins: [
     require('@tailwindcss/forms'),
+    function({ addVariant }) {
+      // Adds a `light:` variant for targeting light mode specifically
+      addVariant('light', ':where(:not(.dark) &)');
+    }
   ],
 } 

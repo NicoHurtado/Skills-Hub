@@ -50,50 +50,104 @@ const Login = () => {
       setIsSubmitting(false);
     }
   };
+
+  // Variantes para animaciones
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        duration: 0.6,
+        when: "beforeChildren",
+        staggerChildren: 0.2
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { 
+        type: "spring",
+        stiffness: 300,
+        damping: 24
+      }
+    }
+  };
+
+  // Variantes para el botón
+  const buttonVariants = {
+    rest: { scale: 1 },
+    hover: { scale: 1.02, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)" },
+    tap: { scale: 0.98 }
+  };
   
   return (
-    <div className="min-h-screen bg-neutral-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <Link to="/" className="flex items-center text-primary-600 hover:text-primary-700">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="sm:mx-auto sm:w-full sm:max-w-md"
+      >
+        <motion.div variants={itemVariants} className="flex justify-center">
+          <Link to="/" className="flex items-center text-primary-600 hover:text-primary-700 transition-colors duration-300">
             <FiArrowLeft className="mr-2" />
             <span>Volver al inicio</span>
           </Link>
-        </div>
-        <h2 className="mt-6 text-center text-3xl font-bold text-neutral-900">
+        </motion.div>
+        <motion.h2 
+          variants={itemVariants} 
+          className="mt-6 text-center text-3xl font-bold text-neutral-900"
+        >
           Inicia sesión en tu cuenta
-        </h2>
-        <p className="mt-2 text-center text-sm text-neutral-600">
+        </motion.h2>
+        <motion.p 
+          variants={itemVariants} 
+          className="mt-2 text-center text-sm text-neutral-600"
+        >
           ¿Aún no tienes una cuenta?{' '}
-          <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500">
+          <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500 transition-colors duration-300">
             Regístrate
           </Link>
-        </p>
-      </div>
+        </motion.p>
+      </motion.div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="bg-white py-8 px-4 shadow-apple sm:rounded-2xl sm:px-10"
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="bg-white py-8 px-8 rounded-3xl shadow-lg"
         >
           {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg" role="alert">
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg"
+              role="alert"
+            >
               <span>{error}</span>
-            </div>
+            </motion.div>
           )}
           
           <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-neutral-700">
+            <motion.div variants={itemVariants}>
+              <label htmlFor="username" className="block text-sm font-medium text-neutral-700 mb-1">
                 Nombre de usuario
               </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <div className="relative">
+                <motion.div 
+                  className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                  whileHover={{ scale: 1.1 }}
+                >
                   <FiUser className="h-5 w-5 text-neutral-400" />
-                </div>
-                <input
+                </motion.div>
+                <motion.input
+                  whileFocus={{ boxShadow: "0 0 0 2px rgba(14, 165, 233, 0.3)" }}
                   id="username"
                   name="username"
                   type="text"
@@ -101,21 +155,25 @@ const Login = () => {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="input pl-10"
+                  className="block w-full pl-10 pr-3 py-3 text-neutral-900 placeholder-neutral-400 bg-neutral-50 rounded-xl focus:outline-none focus:ring-primary-500 transition-shadow duration-200"
                   placeholder="Ingresa tu nombre de usuario"
                 />
               </div>
-            </div>
+            </motion.div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-neutral-700">
+            <motion.div variants={itemVariants}>
+              <label htmlFor="password" className="block text-sm font-medium text-neutral-700 mb-1">
                 Contraseña
               </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <div className="relative">
+                <motion.div 
+                  className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                  whileHover={{ scale: 1.1 }}
+                >
                   <FiLock className="h-5 w-5 text-neutral-400" />
-                </div>
-                <input
+                </motion.div>
+                <motion.input
+                  whileFocus={{ boxShadow: "0 0 0 2px rgba(14, 165, 233, 0.3)" }}
                   id="password"
                   name="password"
                   type="password"
@@ -123,17 +181,21 @@ const Login = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="input pl-10"
+                  className="block w-full pl-10 pr-3 py-3 text-neutral-900 placeholder-neutral-400 bg-neutral-50 rounded-xl focus:outline-none focus:ring-primary-500 transition-shadow duration-200"
                   placeholder="Ingresa tu contraseña"
                 />
               </div>
-            </div>
+            </motion.div>
 
-            <div>
-              <button
+            <motion.div variants={itemVariants}>
+              <motion.button
+                variants={buttonVariants}
+                initial="rest"
+                whileHover="hover"
+                whileTap="tap"
                 type="submit"
                 disabled={isSubmitting}
-                className={`w-full btn btn-primary py-3 ${isSubmitting ? 'opacity-75 cursor-not-allowed' : ''}`}
+                className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-xl text-white font-medium bg-gradient-to-r from-primary-500 to-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all ${isSubmitting ? 'opacity-75 cursor-not-allowed' : ''}`}
               >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center">
@@ -143,8 +205,8 @@ const Login = () => {
                 ) : (
                   'Iniciar sesión'
                 )}
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           </form>
         </motion.div>
       </div>

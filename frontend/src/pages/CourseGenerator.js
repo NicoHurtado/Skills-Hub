@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiCpu, FiArrowRight, FiCheck, FiInfo } from 'react-icons/fi';
@@ -6,6 +6,7 @@ import Layout from '../components/Layout';
 import SubscriptionModal from '../components/SubscriptionModal';
 import { courseService } from '../services/api';
 import axios from 'axios';
+import { ThemeContext } from '../context/ThemeContext';
 
 const experienceLevels = [
   { id: 'beginner', name: 'Principiante', description: 'Poco o ningún conocimiento previo.' },
@@ -22,6 +23,7 @@ const timeDurations = [
 
 const CourseGenerator = () => {
   const navigate = useNavigate();
+  const { darkMode } = useContext(ThemeContext);
   
   const [topic, setTopic] = useState('');
   const [experienceLevel, setExperienceLevel] = useState('');
@@ -118,14 +120,41 @@ const CourseGenerator = () => {
       setError('Error al procesar la suscripción. Por favor, intenta de nuevo.');
     }
   };
+
+  // Clases dinámicas basadas en el tema
+  const titleClass = darkMode ? 'text-white' : 'text-neutral-900';
+  const subtitleClass = darkMode ? 'text-white' : 'text-neutral-900';
+  const labelClass = darkMode ? 'text-white' : 'text-neutral-700';
+  const hintTextClass = darkMode ? 'text-neutral-300' : 'text-neutral-500';
+  
+  // Clases para las tarjetas de selección
+  const cardSelectedClass = darkMode 
+    ? 'border-primary-500 bg-primary-900/30 ring-2 ring-primary-700'
+    : 'border-primary-500 bg-primary-50 ring-2 ring-primary-200';
+  
+  const cardUnselectedClass = darkMode
+    ? 'border-neutral-700 hover:border-primary-500'
+    : 'border-neutral-200 hover:border-primary-300';
+  
+  // Clases para los textos en las tarjetas
+  const cardTitleClass = darkMode ? 'text-white' : 'text-neutral-900';
+  const cardDescriptionClass = darkMode ? 'text-neutral-300' : 'text-neutral-600';
+  
+  // Clase para los círculos numerados
+  const circleClass = darkMode 
+    ? 'flex items-center justify-center bg-primary-700 text-white w-8 h-8 rounded-full mr-3'
+    : 'flex items-center justify-center bg-primary-100 text-primary-700 w-8 h-8 rounded-full mr-3';
   
   return (
     <Layout>
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-2xl font-bold text-neutral-900 mb-6">Generar curso</h1>
+        <h1 className={`text-2xl font-bold ${titleClass} mb-6`}>Generar curso</h1>
         
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg" role="alert">
+          <div className={`mb-6 ${darkMode 
+            ? 'bg-red-900/20 border-red-800/30 text-red-400' 
+            : 'bg-red-50 border-red-200 text-red-700'} 
+            border px-4 py-3 rounded-lg`} role="alert">
             <span>{error}</span>
           </div>
         )}
@@ -133,13 +162,13 @@ const CourseGenerator = () => {
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Topic section */}
           <div className="card">
-            <h2 className="text-lg font-medium text-neutral-900 mb-4 flex items-center">
-              <span className="flex items-center justify-center bg-primary-100 text-primary-700 w-8 h-8 rounded-full mr-3">1</span>
+            <h2 className={`text-lg font-medium ${subtitleClass} mb-4 flex items-center`}>
+              <span className={circleClass}>1</span>
               ¿Qué quieres aprender?
             </h2>
             
             <div>
-              <label htmlFor="topic" className="block text-sm font-medium text-neutral-700 mb-1">
+              <label htmlFor="topic" className={`block text-sm font-medium ${labelClass} mb-1`}>
                 Tema o habilidad
               </label>
               <textarea
@@ -151,7 +180,7 @@ const CourseGenerator = () => {
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
               />
-              <p className="mt-2 text-sm text-neutral-500">
+              <p className={`mt-2 text-sm ${hintTextClass}`}>
                 <FiInfo className="inline mr-1" />
                 Ejemplos: "Programación en Python para análisis de datos", "Marketing digital para pequeños negocios"
               </p>
@@ -160,8 +189,8 @@ const CourseGenerator = () => {
           
           {/* Experience level section */}
           <div className="card">
-            <h2 className="text-lg font-medium text-neutral-900 mb-4 flex items-center">
-              <span className="flex items-center justify-center bg-primary-100 text-primary-700 w-8 h-8 rounded-full mr-3">2</span>
+            <h2 className={`text-lg font-medium ${subtitleClass} mb-4 flex items-center`}>
+              <span className={circleClass}>2</span>
               ¿Cuál es tu nivel de experiencia?
             </h2>
             
@@ -171,18 +200,18 @@ const CourseGenerator = () => {
                   key={level.id}
                   className={`border rounded-xl p-4 cursor-pointer transition-all duration-200 ${
                     experienceLevel === level.id 
-                      ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200' 
-                      : 'border-neutral-200 hover:border-primary-300'
+                      ? cardSelectedClass
+                      : cardUnselectedClass
                   }`}
                   onClick={() => setExperienceLevel(level.id)}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-neutral-900">{level.name}</h3>
+                    <h3 className={`font-medium ${cardTitleClass}`}>{level.name}</h3>
                     {experienceLevel === level.id && (
-                      <FiCheck className="text-primary-600" />
+                      <FiCheck className="text-primary-400" />
                     )}
                   </div>
-                  <p className="text-sm text-neutral-600">{level.description}</p>
+                  <p className={`text-sm ${cardDescriptionClass}`}>{level.description}</p>
                 </div>
               ))}
             </div>
@@ -190,8 +219,8 @@ const CourseGenerator = () => {
           
           {/* Time duration section */}
           <div className="card">
-            <h2 className="text-lg font-medium text-neutral-900 mb-4 flex items-center">
-              <span className="flex items-center justify-center bg-primary-100 text-primary-700 w-8 h-8 rounded-full mr-3">3</span>
+            <h2 className={`text-lg font-medium ${subtitleClass} mb-4 flex items-center`}>
+              <span className={circleClass}>3</span>
               ¿Cuánto tiempo tienes disponible?
             </h2>
             
@@ -201,18 +230,18 @@ const CourseGenerator = () => {
                   key={time.id}
                   className={`border rounded-xl p-4 cursor-pointer transition-all duration-200 ${
                     availableTime === time.id 
-                      ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200' 
-                      : 'border-neutral-200 hover:border-primary-300'
+                      ? cardSelectedClass
+                      : cardUnselectedClass
                   }`}
                   onClick={() => setAvailableTime(time.id)}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-neutral-900">{time.name}</h3>
+                    <h3 className={`font-medium ${cardTitleClass}`}>{time.name}</h3>
                     {availableTime === time.id && (
-                      <FiCheck className="text-primary-600" />
+                      <FiCheck className="text-primary-400" />
                     )}
                   </div>
-                  <p className="text-sm text-neutral-600">{time.description}</p>
+                  <p className={`text-sm ${cardDescriptionClass}`}>{time.description}</p>
                 </div>
               ))}
             </div>

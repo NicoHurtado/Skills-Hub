@@ -5,21 +5,65 @@
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
   }
   
+  /* Estilos para modo oscuro (por defecto) */
   body {
-    @apply antialiased;
+    @apply antialiased bg-neutral-900 text-white transition-colors duration-300;
+  }
+  
+  /* Estilos para modo claro */
+  html:not(.dark) body {
+    @apply bg-white text-neutral-900 transition-colors duration-300;
   }
   
   h1, h2, h3, h4, h5, h6 {
     @apply font-medium tracking-tight;
   }
+
+  /* Asegurar que los textarea y los inputs tengan texto visible */
+  .dark textarea, .dark input, .dark select {
+    @apply text-white placeholder:text-neutral-400;
+  }
+
+  .dark textarea::placeholder, .dark input::placeholder, .dark select::placeholder {
+    @apply text-neutral-400;
+  }
 }
 
 @layer components {
+  /* Toggle de tema */
+  .theme-toggle {
+    @apply relative inline-flex h-6 w-11 items-center rounded-full
+           transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+  
+  .theme-toggle-dark {
+    @apply bg-primary-600;
+  }
+  
+  .theme-toggle-light {
+    @apply bg-neutral-200;
+  }
+  
+  .theme-toggle-thumb {
+    @apply pointer-events-none inline-block h-4 w-4 transform rounded-full 
+           bg-white shadow-lg ring-0 transition duration-200;
+  }
+  
+  .theme-toggle-thumb-dark {
+    @apply translate-x-6;
+  }
+  
+  .theme-toggle-thumb-light {
+    @apply translate-x-1;
+  }
+
+  /* Componentes adaptables al tema */
   .btn {
     @apply inline-flex items-center justify-center px-4 py-2 border border-transparent 
-           rounded-lg font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 
+           rounded-xl font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 
            transition-all duration-200;
   }
   
@@ -28,23 +72,118 @@
   }
   
   .btn-secondary {
-    @apply bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50 focus:ring-primary-500;
+    @apply dark:bg-neutral-800 dark:text-white dark:border-neutral-700 dark:hover:bg-neutral-700
+           bg-neutral-100 text-neutral-800 border-neutral-200 hover:bg-neutral-200
+           focus:ring-primary-500 transition-colors;
   }
   
   .btn-outline {
-    @apply bg-transparent border border-primary-600 text-primary-600 hover:bg-primary-50 focus:ring-primary-500;
+    @apply bg-transparent border border-primary-500 
+           dark:text-primary-400 dark:hover:bg-primary-900/20
+           text-primary-600 hover:bg-primary-50
+           focus:ring-primary-500 transition-colors;
   }
   
   .input {
-    @apply block w-full px-3 py-2 border border-neutral-300 rounded-lg shadow-sm 
-           focus:ring-primary-500 focus:border-primary-500 sm:text-sm;
+    @apply block w-full px-3 py-2 border rounded-xl shadow-sm
+           focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-colors
+           dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:placeholder:text-neutral-400
+           border-neutral-300 bg-white text-neutral-900 placeholder:text-neutral-500;
   }
   
   .card {
-    @apply bg-white rounded-2xl shadow-apple p-6 overflow-hidden;
+    @apply rounded-2xl p-6 overflow-hidden transition-all duration-300 
+           hover:shadow-2xl 
+           dark:hover:border-neutral-600/50 dark:bg-neutral-800/60 dark:backdrop-blur-sm dark:border dark:border-neutral-700/50 dark:shadow-xl dark:text-white
+           hover:border-neutral-300 bg-white border border-neutral-200 shadow-md text-neutral-900;
   }
   
   .card-hover {
-    @apply transition-all duration-200 hover:shadow-apple-lg;
+    @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-1;
+  }
+
+  .text-gradient {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600;
+    color: #38bdf8; /* Fallback color in case the gradient doesn't work */
+  }
+  
+  .glow-effect {
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.5), 0 0 20px rgba(56, 189, 248, 0.3);
+  }
+  
+  .strong-glow-effect {
+    text-shadow: 0 0 15px rgba(56, 189, 248, 0.7), 
+                 0 0 30px rgba(56, 189, 248, 0.5),
+                 0 0 45px rgba(56, 189, 248, 0.3);
+  }
+
+  /* Animación de pulsación para el glow */
+  @keyframes pulse-glow {
+    0% {
+      text-shadow: 0 0 10px rgba(56, 189, 248, 0.5),
+                   0 0 20px rgba(56, 189, 248, 0.3);
+    }
+    50% {
+      text-shadow: 0 0 15px rgba(56, 189, 248, 0.7),
+                   0 0 30px rgba(56, 189, 248, 0.5),
+                   0 0 45px rgba(56, 189, 248, 0.3);
+    }
+    100% {
+      text-shadow: 0 0 10px rgba(56, 189, 248, 0.5),
+                   0 0 20px rgba(56, 189, 248, 0.3);
+    }
+  }
+
+  .animated-glow {
+    animation: pulse-glow 3s infinite ease-in-out;
+  }
+  
+  .glass-effect {
+    @apply dark:bg-neutral-800/30 dark:backdrop-blur-lg dark:border dark:border-neutral-700/50 dark:text-white
+           bg-white/70 backdrop-blur-lg border border-neutral-200/70 text-neutral-900;
+  }
+  
+  .shine-effect {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .shine-effect::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      to bottom right,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(30deg);
+    animation: shine 6s infinite linear;
+  }
+  
+  @keyframes shine {
+    from {
+      transform: translateX(-100%) rotate(30deg);
+    }
+    to {
+      transform: translateX(100%) rotate(30deg);
+    }
+  }
+  
+  .blur-backdrop {
+    @apply dark:backdrop-blur-xl dark:bg-neutral-900/50 dark:border dark:border-neutral-800/50 dark:text-white
+           backdrop-blur-xl bg-white/50 border border-neutral-200/50 text-neutral-900
+           rounded-2xl;
+  }
+  
+  /* Texto específico de TextCycler */
+  .text-cycler-content {
+    @apply text-primary-400;
+    display: block !important; 
+    text-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
   }
 } 
