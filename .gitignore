@@ -1,0 +1,87 @@
+# Dependencias
+node_modules/
+**/node_modules/
+
+# Archivos de caché y compilación
+**/build/
+**/dist/
+**/.cache/
+.parcel-cache/
+.next/
+
+# Python
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos de entorno y configuración
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.development
+.env.test
+.env.production
+
+# Archivos del sistema y editores
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# Archivos específicos de bases de datos
+*.sqlite
+*.sqlite3
+*.db
+last_course_response.txt
+
+# Archivos que podrían contener información sensible
+**/database/
+**/secrets/
+**/credentials/
+
+# Archivos de Docker
+.dockerignore
+
+# Testing
+coverage/
+.nyc_output/
+
+# Archivos generados por el sistema
+thumbs.db
+desktop.ini 

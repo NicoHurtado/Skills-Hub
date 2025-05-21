@@ -271,7 +271,7 @@ const Landing = () => {
                   <div className="mt-5">
                     <h3 className="text-xl font-medium text-white">Cursos personalizados</h3>
                     <p className="mt-2 text-base text-neutral-300">
-                      Genera cursos adaptados a tus necesidades específicas, nivel de experiencia y objetivo de aprendizaje.
+                      Genera cursos completos y personalizados adaptados a tus necesidades específicas, nivel de experiencia y objetivo de aprendizaje.
                     </p>
                   </div>
                 </div>
@@ -292,7 +292,7 @@ const Landing = () => {
                     <FiClock className="h-6 w-6" />
                   </motion.div>
                   <div className="mt-5">
-                    <h3 className="text-xl font-medium text-white">Ahorra tiempo</h3>
+                    <h3 className="text-xl font-medium text-white">Eficiente</h3>
                     <p className="mt-2 text-base text-neutral-300">
                       Obtén rápidamente contenido estructurado sin tener que buscar en múltiples fuentes o diseñar tu propio plan de estudio.
                     </p>
